@@ -1383,7 +1383,7 @@
 // ══════════════════════════════════════════════
 //  CONFIGURATION — paste your Apps Script URL here after deployment
 // ══════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdBK0Rhu-5J9aCT8huzT4yd82DKbaBE4Babzzc2Ac/exec'; // Replace after deploying Apps Script
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwK6UOJP8d3k21mDkIgiVB0et4iuxriL6DIe2gYYuPEFQFlBsHv1kpZIh1BmahDuso/exec'; // Replace after deploying Apps Script
 
 // ══════════════════════════════════════════════
 //  DATA
@@ -1715,13 +1715,33 @@ function previewPhoto(input) {
 // ══════════════════════════════════════════════
 
 function sheetsGet(params) {
-  if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbw0xdLIn02ZxqEGJbjw8nroNb9V_GRXVYQtC8JXmi27-mwr7jMwHa4Sgs43cYHUVRcO/exec') return Promise.resolve(null);
-  const url = SCRIPT_URL + '?' + Object.entries(params).map(function(e) {
-    return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]);
-  }).join('&');
-  return fetch(url, { redirect: 'follow' })
-    .then(function(r) { return r.json(); })
-    .catch(function(err) { console.warn('sheetsGet failed:', err); return null; });
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return Promise.resolve(null);
+  // Use JSONP to bypass CORS — works reliably with Apps Script from any origin
+  return new Promise(function(resolve) {
+    var callbackName = 'cb_' + Date.now();
+    var script = document.createElement('script');
+    var timeout = setTimeout(function() {
+      cleanup();
+      console.warn('sheetsGet timed out');
+      resolve(null);
+    }, 10000);
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[callbackName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+    var url = SCRIPT_URL + '?callback=' + callbackName;
+    Object.entries(params).forEach(function(e) {
+      url += '&' + encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]);
+    });
+    script.src = url;
+    script.onerror = function() { cleanup(); resolve(null); };
+    document.head.appendChild(script);
+  });
 }
 
 function sheetsPost(body) {
