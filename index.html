@@ -1719,16 +1719,21 @@ function sheetsGet(params) {
   const url = SCRIPT_URL + '?' + Object.entries(params).map(function(e) {
     return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]);
   }).join('&');
-  return fetch(url).then(function(r) { return r.json(); }).catch(function() { return null; });
+  return fetch(url, { redirect: 'follow' })
+    .then(function(r) { return r.json(); })
+    .catch(function(err) { console.warn('sheetsGet failed:', err); return null; });
 }
 
 function sheetsPost(body) {
   if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return Promise.resolve(null);
+  // Use no-cors for POST to avoid CORS preflight issues with Apps Script
+  // The request still reaches the server and executes - we just can't read the response
   return fetch(SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body)
-  }).then(function(r) { return r.json(); }).catch(function() { return null; });
+  }).then(function() { return { ok: true }; }).catch(function() { return null; });
 }
 
 async function loadFromSheets() {
@@ -1742,6 +1747,11 @@ async function loadFromSheets() {
       sheetsGet({ action: 'getInventory' }),
       sheetsGet({ action: 'getOrders' })
     ]);
+    if (!invResult) {
+      showBanner('Could not reach Google Sheets. Check that your Apps Script is deployed with "Anyone" access.', 'error');
+      showLoadingOverlay(false);
+      return;
+    }
     if (invResult && invResult.items) {
       inventory = invResult.items.map(function(i) {
         return {
