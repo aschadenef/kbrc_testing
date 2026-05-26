@@ -1715,7 +1715,7 @@ function previewPhoto(input) {
 // ══════════════════════════════════════════════
 
 function sheetsGet(params) {
-  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return Promise.resolve(null);
+  if (!SCRIPT_URL || SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbw0xdLIn02ZxqEGJbjw8nroNb9V_GRXVYQtC8JXmi27-mwr7jMwHa4Sgs43cYHUVRcO/exec') return Promise.resolve(null);
   const url = SCRIPT_URL + '?' + Object.entries(params).map(function(e) {
     return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]);
   }).join('&');
